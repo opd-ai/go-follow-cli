@@ -145,3 +145,81 @@ func (gc *GitHubClient) GetRandomUsers(count int) ([]*github.User, error) {
 
 	return users, nil
 }
+
+// StarRepo stars a specific GitHub repository
+func (gc *GitHubClient) StarRepo(owner, repo string) error {
+	// First check if repo exists
+	repository, _, err := gc.client.Repositories.Get(gc.ctx, owner, repo)
+	if err != nil {
+		if ghErr, ok := err.(*github.ErrorResponse); ok && ghErr.Response.StatusCode == 404 {
+			return fmt.Errorf("repository '%s/%s' not found", owner, repo)
+		}
+		return fmt.Errorf("error checking repository: %w", err)
+	}
+
+	// Check if already starred
+	isStarred, _, err := gc.client.Activity.IsStarred(gc.ctx, owner, repo)
+	if err != nil {
+		return fmt.Errorf("error checking star status: %w", err)
+	}
+
+	if isStarred {
+		return fmt.Errorf("already starred repository '%s/%s'", owner, repo)
+	}
+
+	// Star the repository
+	_, err = gc.client.Activity.Star(gc.ctx, owner, repo)
+	if err != nil {
+		return fmt.Errorf("error starring repository: %w", err)
+	}
+
+	fmt.Printf("Successfully starred %s/%s (%s)\n", owner, repo, repository.GetDescription())
+	return nil
+}
+
+// GetRandomRepos fetches random GitHub repositories
+func (gc *GitHubClient) GetRandomRepos(count int) ([]*github.Repository, error) {
+	repos := make([]*github.Repository, 0, count)
+
+	randomGenerator := NewRandomRepoGenerator()
+
+	for len(repos) < count {
+		query := randomGenerator.GenerateSearchQuery()
+
+		searchOpts := &github.SearchOptions{
+			ListOptions: github.ListOptions{
+				PerPage: 30,
+			},
+		}
+
+		result, resp, err := gc.client.Search.Repositories(gc.ctx, query, searchOpts)
+		if err != nil {
+			return nil, fmt.Errorf("error searching repositories: %w", err)
+		}
+
+		// Add non-duplicate repos
+		for _, repo := range result.Repositories {
+			if len(repos) >= count {
+				break
+			}
+
+			owner := repo.GetOwner().GetLogin()
+			name := repo.GetName()
+
+			// Check if already starred
+			isStarred, _, _ := gc.client.Activity.IsStarred(gc.ctx, owner, name)
+			if !isStarred {
+				repos = append(repos, repo)
+			}
+		}
+
+		// Rate limit handling
+		if resp.Rate.Remaining < 10 {
+			sleepDuration := time.Until(resp.Rate.Reset.Time) + time.Second
+			fmt.Printf("Rate limit low, sleeping for %v...\n", sleepDuration)
+			time.Sleep(sleepDuration)
+		}
+	}
+
+	return repos, nil
+}

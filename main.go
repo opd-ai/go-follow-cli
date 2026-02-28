@@ -32,6 +32,9 @@ with 'user:follow' permissions.`,
 		newFollowAllCommand(),
 		newFollowRandomCommand(),
 		newFollowNCommand(),
+		newStarCommand(),
+		newStarRandomCommand(),
+		newStarNCommand(),
 	)
 
 	if err := rootCmd.Execute(); err != nil {

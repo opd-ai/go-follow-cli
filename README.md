@@ -7,12 +7,14 @@ A command-line tool for managing GitHub following relationships using the GitHub
 - Follow specific GitHub users
 - Follow all followers of a user
 - Follow random GitHub users
+- Star specific GitHub repositories
+- Star random GitHub repositories
 - Simple and maintainable codebase
 
 ## Prerequisites
 
 - Go 1.21 or higher
-- GitHub personal access token with `user:follow` permission
+- GitHub personal access token with `user:follow` and `public_repo` permissions
 
 ## Installation
 
@@ -31,7 +33,7 @@ go install github.com/opd-ai/go-follow-cli@latest
 ## GitHub Token Setup
 
 1. Go to GitHub Settings → Developer settings → Personal access tokens
-2. Generate a new token with `user:follow` permission
+2. Generate a new token with `user:follow` and `public_repo` permissions
 3. Set the environment variable:
 
 ```bash
@@ -64,12 +66,33 @@ go-follow-cli follow-random
 go-follow-cli follow-n 5
 ```
 
+### Star a specific repository
+
+```bash
+go-follow-cli star torvalds/linux
+```
+
+### Star a random repository
+
+```bash
+go-follow-cli star-random
+```
+
+### Star N random repositories
+
+```bash
+go-follow-cli star-n 5
+```
+
 ## Commands
 
 - `follow <username>` - Follow a specific GitHub user
 - `follow-all <username>` - Follow all users who follow the specified username
 - `follow-random` - Follow one randomly selected GitHub user
 - `follow-n <count>` - Follow N randomly selected GitHub users (max 100)
+- `star <owner/repo>` - Star a specific GitHub repository
+- `star-random` - Star one randomly selected GitHub repository
+- `star-n <count>` - Star N randomly selected GitHub repositories (max 100)
 
 ## Error Handling
 
