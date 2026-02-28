@@ -170,6 +170,9 @@ func (gc *GitHubClient) StarRepo(owner, repo string) error {
 	// Star the repository
 	_, err = gc.client.Activity.Star(gc.ctx, owner, repo)
 	if err != nil {
+		if ghErr, ok := err.(*github.ErrorResponse); ok && ghErr.Response.StatusCode == 404 {
+			return fmt.Errorf("error starring repository: 404 from star API (the repo exists, so your GITHUB_TOKEN likely lacks the 'public_repo' scope or fine-grained 'Starring: Read and write' permission)")
+		}
 		return fmt.Errorf("error starring repository: %w", err)
 	}
 
